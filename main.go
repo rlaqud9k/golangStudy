@@ -1,13 +1,11 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httputil"
 	"strconv"
-
-	"github.com/rlaqud9k/golangStudy/calculator"
-	"rsc.io/quote"
 )
 
 func handler(w http.ResponseWriter, r *http.Request) {
@@ -30,26 +28,68 @@ func sum(number1 string, number2 string) (result int) {
 	return
 }
 
+func deferTest() {
+	for i := 1; i <= 4; i++ {
+		defer fmt.Println("deferred", -i)
+		fmt.Println("regular1", i)
+	}
+}
+
 // 포인터 &주소 *주소에 있는 값 엑세스
 func updateName(name *string) {
 	*name = "David"
 }
 
+func highlow(high int, low int) {
+	if high < low {
+		fmt.Println("Panic!")
+		panic("highlow() low greater than high")
+	}
+	defer fmt.Println("Deferred: highlow(", high, ",", low, ")")
+	fmt.Println("Call: highlow(", high, ",", low, ")")
+
+	highlow(high, low+1)
+}
+
+type Employee struct {
+	ID        int
+	FirstName string
+	LastName  string
+	Address   string
+}
+
 func main() {
-	// var httpServer http.Server
-	// http.HandleFunc("/", handler)
-	// log.Println("start http listening :18888")
-	// httpServer.Addr = ":18888"
-	// log.Println(httpServer.ListenAndServe())
-	// fmt.Println(sum("2", "54"))
-	// firstName := "John"
-	// updateName(&firstName)
-	// fmt.Println(firstName)
-	total := calculator.Sum(3, 5)
-	fmt.Println(total)
-	fmt.Println("Version: ", calculator.Version)
-	total2 := calculator.Sum(3, 1113)
-	fmt.Println(total2)
-	fmt.Println("Version: ", calculator.Version)
-	fmt.Println(quote.Hello())
+
+	employee, err := getInformation(1000)
+	if errors.Is(err, ErrorNotFound) {
+		fmt.Printf("NOT FOUND: %v\n", err)
+	} else {
+		fmt.Print(employee)
+	}
+}
+
+var ErrorNotFound = errors.New("Employee not found!")
+
+func getInformation(id int) (*Employee, error) {
+	if id != 1001 {
+		return nil, ErrorNotFound
+	}
+	employee := Employee{LastName: "die", FirstName: "fdsfd"}
+	return &employee, nil
+	// for tries := 0; tries < 3; tries++ {
+	// 	_, err := apiCallEmployee(1000)
+	// 	if err != nil {
+	// 		// return nil, err
+	// 		return nil, fmt.Errorf("GOT an error when getting the employee", err)
+	// 	}
+	// 	fmt.Println("Server is not responding, retrying ...")
+	// 	time.Sleep(time.Second * 2)
+	// }
+
+	// return nil, fmt.Errorf("server has failed to respond to get the employee information")
+}
+
+func apiCallEmployee(id int) (*Employee, error) {
+	employee := Employee{LastName: "eee", FirstName: "John"}
+	return &employee, nil
 }
