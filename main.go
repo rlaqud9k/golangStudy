@@ -1,115 +1,137 @@
 package main
 
 import (
-	"errors"
+	"encoding/json"
 	"fmt"
-	"log"
+	"io"
+	"math"
 	"net/http"
-	"net/http/httputil"
 	"os"
-	"strconv"
 )
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	dump, err := httputil.DumpRequest(r, true)
-	if err != nil {
-		http.Error(w, fmt.Sprint(err), http.StatusInternalServerError)
-		return
-	}
-	fmt.Println(string(dump))
-	fmt.Fprintf(w, "<html><body>heqwerwewllo</bofddy></html>\n")
-}
+// type triangle struct {
+// 	size int
+// }
 
-// 리턴값 명시적으로 구분가능
-func sum(number1 string, number2 string) (result int) {
-	int1, _ := strconv.Atoi(number1)
-	int2, _ := strconv.Atoi(number2)
-	result = int1 + int2
-	result2 := 34
-	fmt.Println(result2)
-	return
-}
+// type coloredTriangle struct {
+// 	triangle
+// 	color string
+// }
 
-func deferTest() {
-	for i := 1; i <= 4; i++ {
-		defer fmt.Println("deferred", -i)
-		fmt.Println("regular1", i)
-	}
-}
+// type upperstring string
 
-// 포인터 &주소 *주소에 있는 값 엑세스
-func updateName(name *string) {
-	*name = "David"
-}
+// func (s upperstring) Upper() string {
+// 	return strings.ToUpper((string(s)))
+// }
 
-func highlow(high int, low int) {
-	if high < low {
-		fmt.Println("Panic!")
-		panic("highlow() low greater than high")
-	}
-	defer fmt.Println("Deferred: highlow(", high, ",", low, ")")
-	fmt.Println("Call: highlow(", high, ",", low, ")")
-
-	highlow(high, low+1)
-}
-
-type Employee struct {
-	ID        int
-	FirstName string
-	LastName  string
-	Address   string
-}
-
+//	func (t triangle) perimeter() int {
+//		return t.size * 3
+//	}
+//
+//	func (t coloredTriangle) perimeter() int {
+//		return t.size * 3 * 2
+//	}
+//
+//	func (t *triangle) doubleSize() {
+//		t.size *= 2
+//	}
 func main() {
-	defer func() {
-		if r := recover(); r != nil {
-			fmt.Println(r)
-			main()
-		}
-	}()
+	// t := tringle{size: 3}
+	// t.doubleSize()
+	// fmt.Println("size:", t.size)
+	// fmt.Println("Perimeter:", t.perimeter())
+	// s := upperstring("Learning Go!")
+	// fmt.Println(s)
+	// fmt.Println(s.Upper())
 
-	var num1, num2 int
-	fmt.Scanln(&num1, &num2)
+	// t := geometry.Triangle{}
+	// t.SetSize(4)
+	// fmt.Println("Perimeter", t.Perimeter())
 
-	result := num1 / num2
+	// t := geometry.Triangle{}
+	// t.SetSize(3)
+	// fmt.Println("Size", t.size)
+	// fmt.Println("Perimeter", t.Perimeter())
 
-	fmt.Println(result)
-}
+	// var s Shape = Square{3}
+	// printInformation(s)
 
-var ErrorNotFound = errors.New("Employee not found!")
+	// c := Circle{6}
+	// printInformation(c)
+	// rs := Person{"JON", "USA"}
+	// var ab Stringer = Person{"VIA", "KOREA"}
+	// fmt.Printf("%s\n%s\n", rs, ab)
 
-func getInformation(id int) (*Employee, error) {
-	if id != 1001 {
-		return nil, ErrorNotFound
-	}
-	employee := Employee{LastName: "die", FirstName: "fdsfd"}
-	return &employee, nil
-	// for tries := 0; tries < 3; tries++ {
-	// 	_, err := apiCallEmployee(1000)
-	// 	if err != nil {
-	// 		// return nil, err
-	// 		return nil, fmt.Errorf("GOT an error when getting the employee", err)
-	// 	}
-	// 	fmt.Println("Server is not responding, retrying ...")
-	// 	time.Sleep(time.Second * 2)
-	// }
-
-	// return nil, fmt.Errorf("server has failed to respond to get the employee information")
-}
-
-func apiCallEmployee(id int) (*Employee, error) {
-	employee := Employee{LastName: "eee", FirstName: "John"}
-	return &employee, nil
-}
-
-func logToFile() {
-	file, err := os.OpenFile("info.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	resp, err := http.Get("https://api.github.com/users/microsoft/repos?page=15&per_page=5")
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println("Error", err)
+		os.Exit(1)
 	}
+	fmt.Println(resp)
+	var writer customWriter = customWriter{}
+	io.Copy(writer, resp.Body)
+}
 
-	defer file.Close()
+type customWriter struct{}
+type GithubResponse []struct {
+	FullName string `json:"full_name"`
+	NodeId   string `json:"node_id"`
+}
 
-	log.SetOutput(file)
-	log.Print("Hey, I'm a log!")
+func (w customWriter) Write(p []byte) (n int, err error) {
+	var resp GithubResponse
+	json.Unmarshal(p, &resp)
+	fmt.Println(p)
+	for _, r := range resp {
+		fmt.Println(r.FullName, r.NodeId)
+	}
+	return len(p), nil
+}
+
+func printInformation(s Shape) {
+	fmt.Printf("%T\n", s)
+	fmt.Println("Area: ", s.Area())
+	fmt.Println("Perimeter:", s.Perimeter())
+	fmt.Println()
+}
+
+type Shape interface {
+	Perimeter() float64
+	Area() float64
+}
+
+type Square struct {
+	size float64
+}
+
+func (s Square) Area() float64 {
+	return s.size * s.size
+}
+
+func (s Square) Perimeter() float64 {
+	return s.size * 4
+}
+
+type Circle struct {
+	radius float64
+}
+
+func (c Circle) Area() float64 {
+	return math.Pi * c.radius * c.radius
+}
+
+func (c Circle) Perimeter() float64 {
+	return 2 * math.Pi * c.radius
+}
+
+type Stringer interface {
+	String() string
+}
+
+type Person struct {
+	Name, Country string
+}
+
+func (p Person) String() string {
+	return fmt.Sprintf("%v is from %v", p.Name, p.Country)
 }
