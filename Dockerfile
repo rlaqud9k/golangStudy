@@ -6,5 +6,4 @@ WORKDIR ${ROOT}
 ENV GO111MODULE=on
 COPY . .
 RUN go install github.com/cosmtrek/air@latest
-
 CMD ["air"]
